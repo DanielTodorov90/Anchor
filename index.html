@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a84ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="A.N.C.H.O.R.">
+  <meta name="description" content="Adaptive Neural Command Hub for Operations & Returns">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/public/manifest.json">
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+
+  <!-- Splash screens for iPhone -->
+  <meta name="apple-mobile-web-app-title" content="ANCHOR">
+
+  <title>A.N.C.H.O.R.</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+
+<div class="scan"></div>
+
+<!-- Install prompt (mobile) -->
+<div class="install-prompt" id="install-prompt">
+  <span style="font-size:22px;">⚓</span>
+  <p>Инсталирай A.N.C.H.O.R. на телефона си за пълен достъп и нотификации.</p>
+  <button class="btn btn-accent" id="install-btn">ИНСТАЛИРАЙ</button>
+  <button class="btn" onclick="document.getElementById('install-prompt').classList.remove('show')">✕</button>
+</div>
+
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">⚓</div>
+      <div>
+        <div class="logo-name">A.N.C.H.O.R.</div>
+        <div class="logo-sub">ADAPTIVE NEURAL COMMAND HUB</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-badge"><div class="status-dot"></div>ONLINE</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="user-tag">DANNY // DS</div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION BAR -->
+  <div class="notif-bar" id="notif-bar">
+    <span id="notif-text"></span>
+    <button class="btn" style="padding:3px 10px;font-size:9px;" onclick="closeNotif()">✕</button>
+  </div>
+
+  <!-- NAV TABS (tablet/desktop) -->
+  <div class="nav-tabs">
+    <button class="tab active" data-tab="chat">COMMAND</button>
+    <button class="tab" data-tab="portfolio">PORTFOLIO</button>
+    <button class="tab" data-tab="markets">MARKETS</button>
+    <button class="tab" data-tab="earnings">EARNINGS</button>
+    <button class="tab" data-tab="tasks">TASKS</button>
+    <button class="tab" data-tab="wordpress">WORDPRESS</button>
+    <button class="tab" data-tab="news">NEWS</button>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- SIDEBAR (tablet/desktop) -->
+    <div class="sidebar">
+      <div class="sb-section">
+        <div class="sb-title">QUICK ACCESS</div>
+        <div class="sb-item active" data-cmd="Покажи ми резюме на деня — пазари, задачи и earnings">
+          <div class="sb-dot success"></div>Резюме на деня
+        </div>
+        <div class="sb-item" data-cmd="Последни новини за пазарите на български">
+          <div class="sb-dot"></div>Пазарни новини
+        </div>
+        <div class="sb-item" data-cmd="Анализирай портфолиото ми и дай препоръки">
+          <div class="sb-dot"></div>Анализ портфолио
+        </div>
+        <div class="sb-item" data-cmd="Кои са upcoming earnings тази и следващата седмица?">
+          <div class="sb-dot warn"></div>Upcoming earnings
+        </div>
+        <div class="sb-item" data-cmd="Покажи задачите ми за днес и тази седмица">
+          <div class="sb-dot"></div>Задачи днес
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">WATCHLIST</div>
+        <div class="sb-item" data-cmd="Направи анализ на Chubb CB преди earnings на 21 април. Трябва ли да купя в зона $290-305?">
+          <div class="sb-dot warn"></div>CB — Apr 21
+        </div>
+        <div class="sb-item" data-cmd="Анализирай CubeSmart CUBE преди earnings на 30 април. Добра ли е DCA зона $34-37?">
+          <div class="sb-dot warn"></div>CUBE — Apr 30
+        </div>
+        <div class="sb-item" data-cmd="Какво е моментното положение на Moody's MCO?">
+          <div class="sb-dot success"></div>MCO — нова позиция
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">VOICE</div>
+        <div class="sb-item" id="sb-voice" onclick="toggleVoice()">
+          <div class="sb-dot" id="sb-voice-dot"></div>
+          <span id="sb-voice-label">Гласов режим</span>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">SYSTEM</div>
+        <div class="sb-item" onclick="requestNotifPermission()">
+          <div class="sb-dot" id="notif-dot"></div>Нотификации
+        </div>
+        <div class="sb-item" onclick="showInstallPrompt()">
+          <div class="sb-dot"></div>Инсталирай PWA
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- CHAT -->
+      <div class="panel active" id="panel-chat">
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="chat-input-row">
+          <textarea class="inp" id="chat-inp" placeholder="Въведи команда..." rows="1"
+            oninput="autoResize(this)"
+            onkeydown="handleKey(event)"></textarea>
+          <button class="btn btn-icon btn-mic" id="mic-btn" onclick="toggleMic()" title="Гласов вход">🎤</button>
+          <button class="btn btn-accent" onclick="sendMsg()">SEND</button>
+        </div>
+      </div>
+
+      <!-- PORTFOLIO -->
+      <div class="panel" id="panel-portfolio">
+        <div class="panel-hdr">// PORTFOLIO — TRADING 212 + REVOLUT</div>
+        <div class="grid-3">
+          <div class="card"><div class="stat-lbl">TOTAL VALUE</div><div class="stat-val" id="pf-total">€ —</div><div class="stat-chg neu">sync with DS app</div></div>
+          <div class="card"><div class="stat-lbl">MONTHLY DIV</div><div class="stat-val" id="pf-div">€ —</div><div class="stat-chg pos">JEIP+JEQP+JGPI</div></div>
+          <div class="card"><div class="stat-lbl">YTD RETURN</div><div class="stat-val" id="pf-ytd">—</div><div class="stat-chg neu">live via app</div></div>
+        </div>
+        <div class="tbl">
+          <div class="tbl-hdr">TITANS — CORE HOLDINGS</div>
+          <div class="tbl-row"><span class="ticker">SXR8</span><span class="r-name">S&P 500 UCITS</span><span class="r-price">—</span><span class="r-chg"><span class="badge badge-hold">~25-30%</span></span></div>
+          <div class="tbl-row"><span class="ticker">JEIP</span><span class="r-name">JPM Income ETF</span><span class="r-price">—</span><span class="r-chg pos">monthly</span></div>
+          <div class="tbl-row"><span class="ticker">JEQP</span><span class="r-name">JPM Equity Prem</span><span class="r-price">—</span><span class="r-chg pos">monthly</span></div>
+          <div class="tbl-row"><span class="ticker">JGPI</span><span class="r-name">JPM Global Prem</span><span class="r-price">—</span><span class="r-chg pos">monthly</span></div>
+          <div class="tbl-row"><span class="ticker">KO</span><span class="r-name">Coca-Cola</span><span class="r-price">—</span><span class="r-chg neu">core</span></div>
+          <div class="tbl-row"><span class="ticker">V</span><span class="r-name">Visa</span><span class="r-price">—</span><span class="r-chg neu">duet</span></div>
+          <div class="tbl-row"><span class="ticker">MA</span><span class="r-name">Mastercard</span><span class="r-price">—</span><span class="r-chg neu">duet</span></div>
+          <div class="tbl-row"><span class="ticker">MCO</span><span class="r-name">Moody's Corp</span><span class="r-price">—</span><span class="r-chg"><span class="badge badge-new">НОВ</span></span></div>
+          <div class="tbl-row"><span class="ticker">CVX</span><span class="r-name">Chevron</span><span class="r-price">—</span><span class="r-chg neu">core</span></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="sendQuick('Направи пълен анализ на портфолиото ми и дай конкретни препоръки')">AI АНАЛИЗ</button>
+          <button class="btn" onclick="sendQuick('Отвори Dividend Sailor app и синхронизирай данните')">SYNC DS APP</button>
+        </div>
+      </div>
+
+      <!-- MARKETS -->
+      <div class="panel" id="panel-markets">
+        <div class="panel-hdr">// MARKETS — LIVE DATA</div>
+        <div class="grid-2">
+          <div class="card"><div class="stat-lbl">BTC / USD</div><div class="stat-val" id="m-btc">—</div><div class="stat-chg" id="m-btc-c">loading...</div></div>
+          <div class="card"><div class="stat-lbl">ETH / USD</div><div class="stat-val" id="m-eth">—</div><div class="stat-chg" id="m-eth-c">loading...</div></div>
+          <div class="card"><div class="stat-lbl">SOL / USD</div><div class="stat-val" id="m-sol">—</div><div class="stat-chg" id="m-sol-c">loading...</div></div>
+          <div class="card"><div class="stat-lbl">EUR / USD</div><div class="stat-val" id="m-eur">—</div><div class="stat-chg neu">forex</div></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button class="btn" onclick="loadMarkets()">REFRESH</button>
+          <button class="btn" onclick="sendQuick('Дай ми пазарен анализ за днес — крипто, акции, EUR/USD. На български.')">AI АНАЛИЗ</button>
+        </div>
+        <div class="tbl">
+          <div class="tbl-hdr">CRYPTO EXIT TARGETS (30% / 40% / 30%)</div>
+          <div class="tbl-row"><span class="ticker">BTC</span><span class="r-name">Bitcoin</span><span class="r-price gold-c">~€114-115k</span><span class="r-chg">staged</span></div>
+          <div class="tbl-row"><span class="ticker">ETH</span><span class="r-name">Ethereum</span><span class="r-price gold-c">~€3,400-3,500</span><span class="r-chg">staged</span></div>
+          <div class="tbl-row"><span class="ticker">SOL</span><span class="r-name">Solana</span><span class="r-price gold-c">~€140-150</span><span class="r-chg">staged</span></div>
+        </div>
+      </div>
+
+      <!-- EARNINGS -->
+      <div class="panel" id="panel-earnings">
+        <div class="panel-hdr">// EARNINGS CALENDAR</div>
+        <div class="tbl">
+          <div class="tbl-hdr">UPCOMING — ACTION REQUIRED</div>
+          <div class="tbl-row"><span class="ticker">CB</span><span class="r-name">Chubb Ltd — Apr 21</span><span class="r-chg"><span class="badge badge-buy">BUY $290-305</span></span></div>
+          <div class="tbl-row"><span class="ticker">IBM</span><span class="r-name">IBM Corp — Apr 22</span><span class="r-chg"><span class="badge badge-watch">WATCH</span></span></div>
+          <div class="tbl-row"><span class="ticker">PG</span><span class="r-name">Procter & Gamble — Apr 24</span><span class="r-chg"><span class="badge badge-watch">WATCH</span></span></div>
+          <div class="tbl-row"><span class="ticker">CUBE</span><span class="r-name">CubeSmart — Apr 30</span><span class="r-chg"><span class="badge badge-buy">DCA $34-37</span></span></div>
+          <div class="tbl-row"><span class="ticker">BRK.B</span><span class="r-name">Berkshire H. — May 4</span><span class="r-chg"><span class="badge badge-watch">WATCH</span></span></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="sendQuick('Пълен анализ Chubb CB преди earnings Apr 21. Трябва ли да купя $290-305 в Revolut?')">АНАЛИЗ CB</button>
+          <button class="btn" onclick="sendQuick('Анализ CubeSmart CUBE REIT. DCA зона $34-37 добра ли е?')">АНАЛИЗ CUBE</button>
+          <button class="btn" onclick="sendQuick('Добави нов earnings в календара')">+ ДОБАВИ</button>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="panel" id="panel-tasks">
+        <div class="panel-hdr">// TASKS & REMINDERS</div>
+        <div class="tbl" id="task-list">
+          <div class="tbl-hdr">АКТИВНИ ЗАДАЧИ</div>
+        </div>
+        <div class="input-row" style="margin-top:10px;">
+          <input class="field" id="task-inp" placeholder="Нова задача..." style="margin:0;" onkeydown="if(event.key==='Enter')addTask()">
+          <select class="field" id="task-prio" style="margin:0;max-width:90px;">
+            <option value="high">HIGH</option>
+            <option value="med" selected>MED</option>
+            <option value="low">LOW</option>
+          </select>
+          <button class="btn btn-accent" onclick="addTask()">ADD</button>
+        </div>
+      </div>
+
+      <!-- WORDPRESS -->
+      <div class="panel" id="panel-wordpress">
+        <div class="panel-hdr">// WORDPRESS — DIVIDEND SAILOR SITE</div>
+        <div id="wp-confirm"></div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="stat-lbl" style="margin-bottom:8px;">НОВА СТАТИЯ</div>
+          <input class="field" id="wp-title" placeholder="Заглавие...">
+          <textarea class="field" id="wp-content" placeholder="Съдържание... (или генерирай с AI)"></textarea>
+          <div class="input-row">
+            <input class="field" id="wp-topic" placeholder="Тема за AI генерация..." style="margin:0;">
+            <button class="btn" onclick="wpGenerate()">AI ГЕНЕРИРАЙ</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+            <button class="btn" onclick="wpDraft()">ЗАПАЗИ DRAFT</button>
+            <button class="btn btn-accent" onclick="wpPublishConfirm()">ПУБЛИКУВАЙ</button>
+          </div>
+        </div>
+        <div class="tbl" id="wp-posts">
+          <div class="tbl-hdr">ПОСЛЕДНИ ПУБЛИКАЦИИ</div>
+          <div class="tbl-row"><span style="color:var(--dim);font-family:var(--font-ui);">Свържи WordPress акаунта за да виждаш статиите</span></div>
+        </div>
+      </div>
+
+      <!-- NEWS -->
+      <div class="panel" id="panel-news">
+        <div class="panel-hdr">// NEWS — MARKETS & CRYPTO</div>
+        <div class="input-row">
+          <input class="field" id="news-q" placeholder="Тема за търсене..." style="margin:0;" onkeydown="if(event.key==='Enter')searchNews()">
+          <button class="btn btn-accent" onclick="searchNews()">SEARCH</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+          <button class="btn" onclick="sendQuick('Намери последните новини за крипто пазарите днес')">КРИПТО</button>
+          <button class="btn" onclick="sendQuick('Намери новини за дивидентни акции и S&P 500 днес')">АКЦИИ</button>
+          <button class="btn" onclick="sendQuick('Финансови новини от България днес')">БЪЛГАРИЯ</button>
+        </div>
+        <div id="news-results" class="tbl">
+          <div class="tbl-hdr">РЕЗУЛТАТИ</div>
+          <div class="tbl-row"><span style="color:var(--dim);font-family:var(--font-ui);">Въведи тема или натисни бутон за търсене</span></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /body -->
+
+  <!-- MOBILE BOTTOM NAV -->
+  <div class="mobile-nav">
+    <div class="mob-tab active" data-tab="chat"><div class="mob-tab-icon">💬</div>CMD</div>
+    <div class="mob-tab" data-tab="portfolio"><div class="mob-tab-icon">📊</div>PORTFOLIO</div>
+    <div class="mob-tab" data-tab="markets"><div class="mob-tab-icon">📈</div>MARKETS</div>
+    <div class="mob-tab" data-tab="earnings"><div class="mob-tab-icon">📅</div>EARNINGS</div>
+    <div class="mob-tab" data-tab="tasks"><div class="mob-tab-icon">✅</div>TASKS</div>
+    <div class="mob-tab" data-tab="wordpress"><div class="mob-tab-icon">🌐</div>WP</div>
+    <div class="mob-tab" data-tab="news"><div class="mob-tab-icon">📰</div>NEWS</div>
+  </div>
+
+</div><!-- /app -->
+
+<script src="/src/utils/storage.js"></script>
+<script src="/src/utils/speech.js"></script>
+<script src="/src/utils/api.js"></script>
+<script src="/src/modules/chat.js"></script>
+<script src="/src/modules/portfolio.js"></script>
+<script src="/src/modules/markets.js"></script>
+<script src="/src/modules/tasks.js"></script>
+<script src="/src/modules/earnings.js"></script>
+<script src="/src/modules/wordpress.js"></script>
+<script src="/src/modules/news.js"></script>
+<script src="/src/app.js"></script>
+</body>
+</html>
