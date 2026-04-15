@@ -365,7 +365,7 @@ async function sendMsg(){
   msgHistory.push({role:'user',content:text});
   showTyping();
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,tools:[{type:'web_search_20250305',name:'web_search'}],messages:msgHistory})});
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,tools:[{type:'web_search_20250305',name:'web_search'}],messages:msgHistory})});
     const data=await res.json();removeTyping();
     let reply='';
     if(data.content)for(const b of data.content)if(b.type==='text')reply+=b.text;
@@ -442,7 +442,7 @@ async function wpGenerate(){
   const te=document.getElementById('wp-title'),ce=document.getElementById('wp-content');
   if(te)te.value='Генерирам...';if(ce)ce.value='A.N.C.H.O.R. пише...';
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Отговаряй САМО с валиден JSON без markdown: {"title":"...","content":"..."}',messages:[{role:'user',content:'Напиши статия за Dividend Sailor блог (Bulgarian) за: '+topic}]})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Отговаряй САМО с валиден JSON без markdown: {"title":"...","content":"..."}',messages:[{role:'user',content:'Напиши статия за Dividend Sailor блог (Bulgarian) за: '+topic}]})});
     const d=await r.json();const txt=d.content.find(b=>b.type==='text')?.text||'{}';
     const parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
     if(te)te.value=parsed.title||topic;if(ce)ce.value=parsed.content||'Грешка.';
