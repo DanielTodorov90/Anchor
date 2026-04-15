@@ -149,7 +149,7 @@ window.addEventListener('appinstalled', () => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('/public/sw.js');
+      const reg = await navigator.serviceWorker.register('./public/sw.js');
       console.log('SW registered:', reg.scope);
     } catch(e) {
       console.log('SW registration failed:', e);
