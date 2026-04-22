@@ -200,24 +200,19 @@ textarea.field{resize:vertical;min-height:80px;}
       <div class="panel" id="panel-portfolio">
         <div class="panel-hdr">// PORTFOLIO — TRADING 212 + REVOLUT</div>
         <div class="grid-3">
-          <div class="card"><div class="stat-lbl">TOTAL VALUE</div><div class="stat-val">€ —</div><div class="stat-chg neu">sync DS app</div></div>
-          <div class="card"><div class="stat-lbl">MONTHLY DIV</div><div class="stat-val">€ —</div><div class="stat-chg pos">JEIP+JEQP+JGPI</div></div>
-          <div class="card"><div class="stat-lbl">YTD RETURN</div><div class="stat-val">—</div><div class="stat-chg neu">live via app</div></div>
+          <div class="card"><div class="stat-lbl">T212 TOTAL</div><div class="stat-val" id="pf-t212">—</div><div class="stat-chg neu">EUR</div></div>
+          <div class="card"><div class="stat-lbl">REVOLUT TOTAL</div><div class="stat-val" id="pf-rev">—</div><div class="stat-chg neu">USD</div></div>
+          <div class="card"><div class="stat-lbl">ПОЗИЦИИ</div><div class="stat-val" id="pf-count">—</div><div class="stat-chg neu">общо</div></div>
         </div>
-        <div class="tbl">
-          <div class="tbl-hdr">TITANS — CORE HOLDINGS</div>
-          <div class="tbl-row"><span class="ticker">SXR8</span><span class="r-name">S&P 500 UCITS</span><span class="r-chg"><span class="badge badge-hold">~25-30%</span></span></div>
-          <div class="tbl-row"><span class="ticker">JEIP</span><span class="r-name">JPM Income ETF</span><span class="r-chg pos">monthly</span></div>
-          <div class="tbl-row"><span class="ticker">JEQP</span><span class="r-name">JPM Equity Prem</span><span class="r-chg pos">monthly</span></div>
-          <div class="tbl-row"><span class="ticker">JGPI</span><span class="r-name">JPM Global Prem</span><span class="r-chg pos">monthly</span></div>
-          <div class="tbl-row"><span class="ticker">KO</span><span class="r-name">Coca-Cola</span><span class="r-chg neu">core</span></div>
-          <div class="tbl-row"><span class="ticker">V</span><span class="r-name">Visa</span><span class="r-chg neu">duet</span></div>
-          <div class="tbl-row"><span class="ticker">MA</span><span class="r-name">Mastercard</span><span class="r-chg neu">duet</span></div>
-          <div class="tbl-row"><span class="ticker">MCO</span><span class="r-name">Moody's Corp</span><span class="r-chg"><span class="badge badge-new">НОВ</span></span></div>
-          <div class="tbl-row"><span class="ticker">CVX</span><span class="r-name">Chevron</span><span class="r-chg neu">core</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn btn-accent" onclick="loadPortfolio()">REFRESH</button>
+          <button class="btn" onclick="filterPortfolio('all')">ВСИЧКИ</button>
+          <button class="btn" onclick="filterPortfolio('T212')">T212</button>
+          <button class="btn" onclick="filterPortfolio('Revolut')">REVOLUT</button>
+          <button class="btn" onclick="sendQuick('Направи пълен анализ на цялото ми портфолио и дай конкретни препоръки')">AI АНАЛИЗ</button>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn" onclick="sendQuick('Направи пълен анализ на портфолиото ми')">AI АНАЛИЗ</button>
+        <div class="tbl" id="pf-table">
+          <div class="tbl-hdr">ЗАРЕЖДА СЕ...</div>
         </div>
       </div>
       <div class="panel" id="panel-markets">
@@ -455,6 +450,65 @@ function wpDraft(){const title=document.getElementById('wp-title')?.value.trim()
 // ── NEWS ──
 function searchNews(){const q=document.getElementById('news-q')?.value.trim();if(!q){showNotif('Въведи тема.');return;}switchTab('chat');sendQuick('Потърси актуални новини за: "'+q+'". Дай 3-4 резюмета на български с източници.');}
 
+
+// ── PORTFOLIO ──
+let allPositions = [];
+
+async function loadPortfolio() {
+  const tbl = document.getElementById('pf-table');
+  if (tbl) tbl.innerHTML = '<div class="tbl-hdr">ЗАРЕЖДА СЕ...</div>';
+  try {
+    const r = await fetch('/api/portfolio');
+    const data = await r.json();
+    allPositions = data.positions || [];
+    const s = data.summary || {};
+    const t212El = document.getElementById('pf-t212');
+    const revEl = document.getElementById('pf-rev');
+    const cntEl = document.getElementById('pf-count');
+    if (t212El) t212El.textContent = '€' + Number(s.t212_total_eur).toFixed(0);
+    if (revEl) revEl.textContent = '$' + Number(s.revolut_total_usd).toFixed(0);
+    if (cntEl) cntEl.textContent = s.total_positions;
+    renderPortfolio(allPositions);
+  } catch(e) {
+    const tbl = document.getElementById('pf-table');
+    if (tbl) tbl.innerHTML = '<div class="tbl-hdr">ГРЕШКА ПРИ ЗАРЕЖДАНЕ</div><div class="tbl-row"><span style="color:var(--danger);font-family:var(--font-ui);">Провери интернет връзката</span></div>';
+  }
+}
+
+function filterPortfolio(platform) {
+  if (platform === 'all') renderPortfolio(allPositions);
+  else renderPortfolio(allPositions.filter(p => p.platform === platform));
+}
+
+function renderPortfolio(positions) {
+  const tbl = document.getElementById('pf-table');
+  if (!tbl) return;
+  const t212 = positions.filter(p => p.platform === 'T212');
+  const rev = positions.filter(p => p.platform === 'Revolut');
+  let html = '';
+  if (t212.length) {
+    html += '<div class="tbl-hdr">TRADING 212 (' + t212.length + ' позиции — EUR)</div>';
+    html += t212.map(p => `
+      <div class="tbl-row">
+        <span class="ticker">${escH(p.ticker)}</span>
+        <span class="r-name">${escH(p.name)}</span>
+        <span class="r-price" style="color:var(--text);width:65px;text-align:right;">${Number(p.shares).toFixed(4)}</span>
+        <span class="r-chg gold-c">€${Number(p.current_value).toFixed(2)}</span>
+      </div>`).join('');
+  }
+  if (rev.length) {
+    html += '<div class="tbl-hdr" style="margin-top:4px;">REVOLUT (' + rev.length + ' позиции — USD)</div>';
+    html += rev.map(p => `
+      <div class="tbl-row">
+        <span class="ticker">${escH(p.ticker)}</span>
+        <span class="r-name">${escH(p.name)}</span>
+        <span class="r-price" style="color:var(--text);width:65px;text-align:right;">${Number(p.shares).toFixed(4)}</span>
+        <span class="r-chg gold-c">$${Number(p.current_value).toFixed(2)}</span>
+      </div>`).join('');
+  }
+  if (!html) html = '<div class="tbl-row"><span style="color:var(--dim);font-family:var(--font-ui);">Няма позиции</span></div>';
+  tbl.innerHTML = html;
+}
 // ── PWA / SERVICE WORKER ──
 if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./public/sw.js').catch(()=>{});});}
 
@@ -465,7 +519,7 @@ if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!window.navigator.standalone){
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded',()=>{
-  loadTasks();loadMarkets();
+  loadTasks();loadMarkets();loadPortfolio();
   setTimeout(()=>{
     const h=new Date().getHours();
     const g=h<12?'Добро утро':h<18?'Добър ден':'Добър вечер';
